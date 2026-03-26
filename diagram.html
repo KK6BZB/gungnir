@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Gungnir Architecture</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0a0e17;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    font-family: 'Courier New', monospace;
+    color: #c8d6e5;
+    padding: 40px;
+  }
+  .container {
+    width: 1200px;
+    padding: 50px;
+  }
+  .title {
+    text-align: center;
+    margin-bottom: 10px;
+  }
+  .title h1 {
+    font-size: 42px;
+    color: #f5a623;
+    letter-spacing: 8px;
+    font-weight: bold;
+  }
+  .title .subtitle {
+    font-size: 16px;
+    color: #6b7c93;
+    letter-spacing: 2px;
+    margin-top: 5px;
+  }
+  .title .tagline {
+    font-size: 14px;
+    color: #4a5568;
+    margin-top: 3px;
+    font-style: italic;
+  }
+  .diagram {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    margin: 50px 0 40px 0;
+  }
+  .node {
+    background: #141b2a;
+    border: 2px solid #2a3a5c;
+    border-radius: 12px;
+    padding: 25px 20px;
+    width: 240px;
+    text-align: center;
+  }
+  .node.sender {
+    border-color: #f5a623;
+    box-shadow: 0 0 20px rgba(245, 166, 35, 0.15);
+  }
+  .node.gateway {
+    border-color: #4fc3f7;
+    box-shadow: 0 0 20px rgba(79, 195, 247, 0.15);
+  }
+  .node .icon {
+    font-size: 36px;
+    margin-bottom: 10px;
+  }
+  .node .label {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 8px;
+  }
+  .node.sender .label { color: #f5a623; }
+  .node.gateway .label { color: #4fc3f7; }
+  .node .detail {
+    font-size: 11px;
+    color: #6b7c93;
+    line-height: 1.6;
+  }
+  .node .callsign {
+    font-size: 13px;
+    color: #8899aa;
+    margin-top: 8px;
+    font-weight: bold;
+  }
+  .air-gap {
+    flex: 1;
+    max-width: 300px;
+    min-width: 200px;
+    text-align: center;
+    position: relative;
+    padding: 0 10px;
+  }
+  .air-gap .band {
+    font-size: 13px;
+    color: #f5a623;
+    margin-bottom: 8px;
+    font-weight: bold;
+  }
+  .air-gap .arrow-line {
+    position: relative;
+    height: 2px;
+    background: linear-gradient(90deg, #f5a623, #e85d3a, #4fc3f7);
+    margin: 15px 0;
+  }
+  .air-gap .arrow-line::after {
+    content: '';
+    position: absolute;
+    right: -2px;
+    top: -5px;
+    border: 6px solid transparent;
+    border-left: 10px solid #4fc3f7;
+  }
+  .air-gap .arrow-line-back {
+    position: relative;
+    height: 2px;
+    background: linear-gradient(90deg, #4fc3f7, #e85d3a, #f5a623);
+    margin: 15px 0;
+    opacity: 0.5;
+  }
+  .air-gap .arrow-line-back::before {
+    content: '';
+    position: absolute;
+    left: -2px;
+    top: -5px;
+    border: 6px solid transparent;
+    border-right: 10px solid #f5a623;
+  }
+  .air-gap .frame {
+    font-size: 10px;
+    color: #e85d3a;
+    font-family: 'Courier New', monospace;
+    background: rgba(232, 93, 58, 0.1);
+    border: 1px solid rgba(232, 93, 58, 0.3);
+    border-radius: 4px;
+    padding: 4px 8px;
+    margin: 6px auto;
+    display: inline-block;
+  }
+  .air-gap .ack-label {
+    font-size: 10px;
+    color: #4fc3f7;
+    opacity: 0.6;
+  }
+  .air-gap .mode {
+    font-size: 11px;
+    color: #6b7c93;
+    margin-top: 8px;
+  }
+  .bitcoin-node {
+    width: 140px;
+    text-align: center;
+    margin-left: 20px;
+  }
+  .bitcoin-node .icon {
+    font-size: 40px;
+    margin-bottom: 8px;
+  }
+  .bitcoin-node .label {
+    font-size: 14px;
+    color: #f7931a;
+    font-weight: bold;
+  }
+  .bitcoin-node .detail {
+    font-size: 10px;
+    color: #6b7c93;
+    margin-top: 4px;
+  }
+  .arrow-small {
+    font-size: 24px;
+    color: #4fc3f7;
+    margin: 0 8px;
+    opacity: 0.6;
+  }
+  .stats {
+    display: flex;
+    justify-content: center;
+    gap: 50px;
+    margin-top: 35px;
+    padding-top: 25px;
+    border-top: 1px solid #1a2440;
+  }
+  .stat {
+    text-align: center;
+  }
+  .stat .value {
+    font-size: 22px;
+    color: #f5a623;
+    font-weight: bold;
+  }
+  .stat .desc {
+    font-size: 11px;
+    color: #6b7c93;
+    margin-top: 4px;
+  }
+  .footer {
+    text-align: center;
+    margin-top: 30px;
+    font-size: 12px;
+    color: #3a4a5c;
+    letter-spacing: 3px;
+  }
+  .no-internet {
+    display: inline-block;
+    background: rgba(245, 166, 35, 0.1);
+    border: 1px solid rgba(245, 166, 35, 0.3);
+    border-radius: 4px;
+    padding: 3px 10px;
+    font-size: 11px;
+    color: #f5a623;
+    margin-top: 10px;
+  }
+  .has-internet {
+    display: inline-block;
+    background: rgba(79, 195, 247, 0.1);
+    border: 1px solid rgba(79, 195, 247, 0.3);
+    border-radius: 4px;
+    padding: 3px 10px;
+    font-size: 11px;
+    color: #4fc3f7;
+    margin-top: 10px;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="title">
+    <h1>GUNGNIR</h1>
+    <div class="subtitle">BITCOIN TRANSACTION RELAY OVER HF RADIO</div>
+    <div class="tagline">Odin's spear — thrown once, it never misses its mark</div>
+  </div>
+
+  <div class="diagram">
+    <!-- Sender -->
+    <div class="node sender">
+      <div class="icon">&#128225;</div>
+      <div class="label">SENDER</div>
+      <div class="detail">
+        Sign transaction offline<br>
+        Encode + compress (zlib)<br>
+        Chunk into frames<br>
+        CRC-8 per chunk
+      </div>
+      <div class="callsign">KK6BZB</div>
+      <div class="no-internet">NO INTERNET</div>
+    </div>
+
+    <!-- Air Gap -->
+    <div class="air-gap">
+      <div class="band">40m / 7.078 MHz</div>
+      <div class="arrow-line"></div>
+      <div class="frame">GUNGNIR:a7f2:01/02:eNpjYgAC...</div>
+      <div class="frame">GUNGNIR:a7f2:ENDZ:110fcdfd</div>
+      <div class="arrow-line-back"></div>
+      <div class="ack-label">GUNGNIR:a7f2:ACK:1968a721</div>
+      <div class="mode">JS8Call &middot; FT8-derived modulation &middot; -24dB SNR</div>
+    </div>
+
+    <!-- Gateway -->
+    <div class="node gateway">
+      <div class="icon">&#128752;</div>
+      <div class="label">GATEWAY</div>
+      <div class="detail">
+        Reassemble chunks<br>
+        Decompress + verify CRC-32<br>
+        Broadcast to network<br>
+        Send ACK with TXID
+      </div>
+      <div class="callsign">VOLUNTEER OP</div>
+      <div class="has-internet">INTERNET</div>
+    </div>
+
+    <!-- Arrow to Bitcoin -->
+    <div class="arrow-small">&#10132;</div>
+
+    <!-- Bitcoin Network -->
+    <div class="bitcoin-node">
+      <div class="icon">&#8383;</div>
+      <div class="label">BITCOIN<br>NETWORK</div>
+      <div class="detail">mempool.space API<br>or local node RPC</div>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="value">~60s</div>
+      <div class="desc">Simple SegWit TX<br>JS8Call Normal</div>
+    </div>
+    <div class="stat">
+      <div class="value">53%</div>
+      <div class="desc">Compression savings<br>zlib level 9</div>
+    </div>
+    <div class="stat">
+      <div class="value">2</div>
+      <div class="desc">Frames + END<br>after compression</div>
+    </div>
+    <div class="stat">
+      <div class="value">-24dB</div>
+      <div class="desc">Minimum SNR<br>signals in noise</div>
+    </div>
+  </div>
+
+  <div class="footer">VALHALLA SYSTEMS &middot; KK6BZB &middot; 2026</div>
+
+</div>
+</body>
+</html>
